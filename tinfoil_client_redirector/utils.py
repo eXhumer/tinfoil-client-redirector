@@ -1,11 +1,12 @@
 from flask import request
-from pymongo.database import Database
+from .db import get_db
 
 
-def valid_tinfoil_request(db: Database) -> bool:
+def valid_tinfoil_request() -> bool:
     """Validate tinfoil requests with data from
     local mongodb connection.
     """
+    db = get_db()
     req_hauth = request.headers.get("HAUTH")
     req_uauth = request.headers.get("UAUTH")
     req_theme = request.headers.get("Theme")
@@ -20,17 +21,21 @@ def valid_tinfoil_request(db: Database) -> bool:
     tinfoil_headers_present &= bool(req_language and req_version)
 
     if tinfoil_headers_present:
-        hauth_info = db.auth_collection.find_one({
-            "KEY": request.url_root[:-0x1],
-        })
-        uauth_info = db.auth_collection.find_one({
-            "KEY": request.url,
-        })
+        valid_hauth = False
+        valid_uauth = False
 
-        valid_hauth = bool(hauth_info and hauth_info["VALUE"] ==
-                           req_hauth)
-        valid_uauth = bool(uauth_info and uauth_info["VALUE"] ==
-                           req_uauth)
+        hauth_key = request.url_root[:-0x1]
+        uauth_key = request.url
+
+        auth_query_filter = {"KEY": {"$in": [hauth_key, uauth_key]}}
+        auth_infos = db.auth_collection.find(auth_query_filter)
+
+        for auth_info in auth_infos:
+            if auth_info:
+                if auth_info["KEY"] == hauth_key:
+                    valid_hauth = auth_info["VALUE"] == req_hauth
+                elif auth_info["KEY"] == uauth_key:
+                    valid_uauth = auth_info["VALUE"] == req_uauth
 
         return tinfoil_headers_present and valid_hauth and valid_uauth
 
