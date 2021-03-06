@@ -44,4 +44,14 @@ def valid_tinfoil_request() -> bool:
 
 
 def get_user_redirector_index() -> str:
+    db = get_db()
+    req_uid = request.headers["UID"]
+    user_blacklisted = db.blacklist_collection.find_one({
+        "UID": req_uid,
+    })
+    if user_blacklisted:
+        blacklist_reason = user_blacklisted["REASON"]
+        return json.dumps({
+            "error": f"User Blacklisted!\nReason: {blacklist_reason}"
+        })
     return json.dumps({"success": "Hello Tinfoil :)"})
