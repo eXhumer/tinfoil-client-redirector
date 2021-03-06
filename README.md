@@ -13,3 +13,8 @@ flask run --host=0.0.0.0
 ```
 flask import-auth-value KEY VALUE
 ```
+
+## To blacklist users
+```
+flask blacklist-uid [UID1 UID2 UID3 ...] REASON
+```
