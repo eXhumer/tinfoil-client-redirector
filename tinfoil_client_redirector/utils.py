@@ -1,5 +1,6 @@
 from flask import request
 from .db import get_db
+import json
 
 
 def valid_tinfoil_request() -> bool:
@@ -40,3 +41,7 @@ def valid_tinfoil_request() -> bool:
         return tinfoil_headers_present and valid_hauth and valid_uauth
 
     return False
+
+
+def get_user_redirector_index() -> str:
+    return json.dumps({"success": "Hello Tinfoil :)"})
