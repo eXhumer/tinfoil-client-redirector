@@ -25,7 +25,6 @@ def init_db():
 @click.command("init-db")
 @with_appcontext
 def init_db_command():
-    """Clear the existing data and create new tables."""
     init_db()
     click.echo("Initialized the database.")
 
@@ -35,7 +34,6 @@ def init_db_command():
 @click.argument("value", nargs=1)
 @with_appcontext
 def import_auth_value_command(key: str, value: str):
-    """Clear the existing data and create new tables."""
     db = get_db()
     check_existing_key = db.auth_collection.find_one({
         "KEY": key,
