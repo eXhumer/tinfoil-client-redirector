@@ -1,3 +1,4 @@
+from typing import List
 import click
 from flask import current_app, g
 from flask_pymongo import PyMongo
@@ -56,7 +57,34 @@ def import_auth_value_command(key: str, value: str):
         })
 
 
+@click.command("blacklist-uid")
+@click.argument("uids", nargs=-1)
+@click.argument("reason", nargs=1)
+@with_appcontext
+def blacklist_uid(uids: List[str], reason: str):
+    db = get_db()
+
+    uids_query_filter = {"UID": {"$in": uids}}
+    already_blacklisted_users = db.blacklist_collection.find(
+        uids_query_filter,
+    )
+
+    for blacklisted_user in already_blacklisted_users:
+        blacklist_uid = blacklisted_user["UID"]
+        blacklist_reason = blacklisted_user["REASON"]
+        click.echo(f"UID {blacklist_uid} already blacklisted!\n" +
+                   f"Reason: {blacklist_reason}")
+        uids.remove(blacklist_uid)
+
+    if len(uids):
+        result = db.blacklist_collection.insert_many([
+            {"UID": uid, "REASON": reason} for uid in uids
+        ])
+        click.echo(result.inserted_ids)
+
+
 def init_app(app):
     app.teardown_appcontext(close_db)
+    app.cli.add_command(blacklist_uid)
     app.cli.add_command(init_db_command)
     app.cli.add_command(import_auth_value_command)
